@@ -1547,7 +1547,8 @@ if "QC Monitor" in menu:
             sla_c,sla_t=sla_badge(row.get("SLA Minutes",""))
             item_cls="has-issue" if err=="1" else ("ok" if "ok" in qc_f.lower() else "needs-qc")
             qc_display=qc_f if qc_f not in ["","nan","0","Pending QC"] else "Pending"
-            st.markdown(f'<div class="qc-item {item_cls}"><div class="qc-top"><div><div class="qc-id">{TASK_TYPES.get(tt,("📋","","",""))[0]} {tt}&nbsp;<span style="font-size:10px;color:var(--mu)">#{bid or "-"} · {staff_b}</span></div><div class="qc-meta">{hotel_} · {hr}</div></div><div class="qc-badges"><span class="{status_badge(st2)}">{st2}</span><span class="{sla_c}">{sla_t}</span><span class="{qc_badge(qc_f)}">QC-F: {qc_display}</span>{"<span class='sla-over'>⚠ Error</span>" if err=="1" else ""}</div></div></div>', unsafe_allow_html=True)
+            err_html = "<span class='sla-over'>&#9888; Error</span>" if err == "1" else ""
+            st.markdown(f'<div class="qc-item {item_cls}"><div class="qc-top"><div><div class="qc-id">{TASK_TYPES.get(tt,("📋","","",""))[0]} {tt}&nbsp;<span style="font-size:10px;color:var(--mu)">#{bid or "-"} &middot; {staff_b}</span></div><div class="qc-meta">{hotel_} &middot; {hr}</div></div><div class="qc-badges"><span class="{status_badge(st2)}">{st2}</span><span class="{sla_c}">{sla_t}</span><span class="{qc_badge(qc_f)}">QC-F: {qc_display}</span>{err_html}</div></div></div>', unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  PAGE: LEADERBOARD
