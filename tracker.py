@@ -497,50 +497,38 @@ IDLE_JS = f"""
 <div id="idle-toast"><div id="idle-dot"></div><span id="idle-txt">Sesi aktif</span></div>
 <script>
 (function(){{
-  var TIMEOUT = {IDLE_TIMEOUT_MS};
-  var WARN_AT = TIMEOUT - 2 * 60 * 1000;
-  var lastAct = Date.now();
-  var toast = document.getElementById('idle-toast');
-  var dot   = document.getElementById('idle-dot');
-  var txt   = document.getElementById('idle-txt');
-
+  var TIMEOUT={IDLE_TIMEOUT_MS};
+  var WARN_AT=TIMEOUT-2*60*1000;
+  var lastAct=Date.now();
+  var toast=document.getElementById('idle-toast');
+  var dot=document.getElementById('idle-dot');
+  var txt=document.getElementById('idle-txt');
   ['mousemove','keydown','mousedown','touchstart','scroll','click'].forEach(function(ev){{
-    document.addEventListener(ev, function(){{
-      lastAct = Date.now();
-    }}, {{passive: true}});
+    document.addEventListener(ev,function(){{lastAct=Date.now();}},{{passive:true}});
   }});
-
   function fmt(ms){{
-    var s = Math.ceil(ms/1000);
-    return Math.floor(s/60) + 'm ' + (s%60 < 10 ? '0' : '') + s%60 + 's';
+    var s=Math.ceil(ms/1000);
+    var m=Math.floor(s/60);
+    var ss=s%60;
+    return m+'m '+(ss<10?'0':'')+ss+'s';
   }}
-
   setInterval(function(){{
-    var elapsed = Date.now() - lastAct;
-    var sisa    = TIMEOUT - elapsed;
-
-    if(sisa <= 0){{
-      window.location.reload();
-      return;
-    }}
-
-    if(elapsed >= WARN_AT){{
+    var elapsed=Date.now()-lastAct;
+    var sisa=TIMEOUT-elapsed;
+    if(sisa<=0){{window.location.reload();return;}}
+    if(elapsed>=WARN_AT){{
       toast.classList.add('show');
-      dot.className = sisa <= 60000 ?
-      txt.textContent = sisa <= 60000
-        ? 'Logout otomatis: ' + fmt(sisa)
-        : 'Idle - Logout dalam ' + fmt(sisa);
-    }} else {{
+      if(sisa<=60000){{dot.className='danger';txt.textContent='Logout otomatis: '+fmt(sisa);}}
+      else{{dot.className='warn';txt.textContent='Idle - Logout dalam '+fmt(sisa);}}
+    }}else{{
       toast.classList.remove('show');
-      dot.className = '';
-      txt.textContent = 'Sesi aktif';
+      dot.className='';
+      txt.textContent='Sesi aktif';
     }}
-  }}, 1000);
-
+  }},1000);
 }})();
 </script>
 """
-
 # ── Google Sheets ─────────────────────────────────────────────────────────────
 @st.cache_resource(ttl=3600)
 def _get_or_create_ws(_wb, name, rows, cols):
