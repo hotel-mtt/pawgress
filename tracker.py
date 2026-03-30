@@ -526,7 +526,7 @@ IDLE_JS = f"""
 
     if(elapsed >= WARN_AT){{
       toast.classList.add('show');
-      dot.className = sisa <= 60000 ? 'danger' : 'warn';
+      dot.className = sisa <= 60000 ?
       txt.textContent = sisa <= 60000
         ? 'Logout otomatis: ' + fmt(sisa)
         : 'Idle - Logout dalam ' + fmt(sisa);
