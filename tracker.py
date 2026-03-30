@@ -1079,6 +1079,7 @@ if "Input" in menu:
   color:#fff;width:100%;
   background:{color_js};
   transition:all .15s;letter-spacing:.2px;
+  pointer-events:auto;
 }}
 #lup-btn:hover{{opacity:.88;transform:translateY(-1px);}}
 #lup-btn:active{{transform:translateY(0);opacity:1;}}
@@ -1101,13 +1102,28 @@ if "Input" in menu:
       <span>{xp_js} XP</span>
       <span>{prog_lbl}</span>
     </div>
-    <button id="lup-btn" onclick="lupClose()">Lanjut &#x2192;</button>
+    <button id="lup-btn">Lanjut &#x2192;</button>
   </div>
 </div>
 
 <script>
 (function(){{
   var confInt = null;
+
+  function lupClose(){{
+    var ov = document.getElementById('lup-overlay');
+    var cv = document.getElementById('lup-canvas');
+    if(ov){{
+      ov.style.transition = 'opacity .25s';
+      ov.style.opacity    = '0';
+    }}
+    if(confInt) clearInterval(confInt);
+    if(cv) cv.getContext('2d').clearRect(0, 0, cv.width, cv.height);
+    setTimeout(function(){{
+      if(ov) ov.style.display = 'none';
+      if(cv) cv.style.display = 'none';
+    }}, 260);
+  }}
 
   function lupBurst(){{
     var cv = document.getElementById('lup-canvas');
@@ -1117,20 +1133,20 @@ if "Input" in menu:
     var ctx = cv.getContext('2d');
     var cx  = cv.width / 2;
     var cy  = cv.height / 2;
-    var cols = ['{color_js}','#88bc77','#ccebf2','#f9e2b2','#f37973','#ffffff','#fbbf24','#a78bfa'];
+    var cols   = ['{color_js}','#88bc77','#ccebf2','#f9e2b2','#f37973','#ffffff','#fbbf24','#a78bfa'];
     var shapes = ['circle','rect','star','diamond'];
     var pts = Array.from({{length:65}}, function(){{
       var a   = Math.random() * Math.PI * 2;
       var spd = Math.random() * 9 + 3;
       return {{
-        x:cx, y:cy,
+        x: cx, y: cy,
         vx: Math.cos(a) * spd,
         vy: Math.sin(a) * spd - 5,
         sz: Math.random() * 9 + 3,
         c:  cols[Math.floor(Math.random() * cols.length)],
         r:  Math.random() * 360,
         vr: (Math.random() - .5) * 12,
-        life: 1,
+        life:  1,
         decay: Math.random() * 0.013 + 0.008,
         shape: shapes[Math.floor(Math.random() * shapes.length)]
       }};
@@ -1154,7 +1170,7 @@ if "Input" in menu:
         if(p.shape === 'circle'){{
           ctx.beginPath(); ctx.arc(0,0,s/2,0,Math.PI*2); ctx.fill();
         }} else if(p.shape === 'rect'){{
-          ctx.fillRect(-s/2, -s/4, s, s/2);
+          ctx.fillRect(-s/2,-s/4,s,s/2);
         }} else if(p.shape === 'diamond'){{
           ctx.beginPath();
           ctx.moveTo(0,-s/2); ctx.lineTo(s/2,0);
@@ -1180,29 +1196,32 @@ if "Input" in menu:
     }}, 16);
   }}
 
-  window.lupClose = function(){{
-    var ov = document.getElementById('lup-overlay');
-    var cv = document.getElementById('lup-canvas');
-    if(ov){{ ov.style.transition='opacity .25s'; ov.style.opacity='0'; }}
-    if(confInt) clearInterval(confInt);
-    if(cv) cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
-    setTimeout(function(){{
-      if(ov) ov.style.display='none';
-      if(cv) cv.style.display='none';
-    }}, 260);
-  }};
+  function init(){{
+    var btn = document.getElementById('lup-btn');
+    var pf  = document.getElementById('lup-prog-fill');
+    if(btn){{
+      btn.addEventListener('click', lupClose);
+      btn.addEventListener('touchend', function(e){{
+        e.preventDefault();
+        lupClose();
+      }});
+    }}
+    if(pf){{
+      setTimeout(function(){{ pf.style.width = '{prog_pct}%'; }}, 120);
+    }}
+    lupBurst();
+  }}
 
-  setTimeout(function(){{
-    var pf = document.getElementById('lup-prog-fill');
-    if(pf) pf.style.width = '{prog_pct}%';
-  }}, 120);
-
-  lupBurst();
+  if(document.readyState === 'loading'){{
+    document.addEventListener('DOMContentLoaded', init);
+  }} else {{
+    init();
+  }}
 }})();
 </script>
 """, unsafe_allow_html=True)
-    
-    # ── End level up popup ────────────────────────────────────────────────────
+        
+    # ── End level up popup ────────────────────────────────────────────────────    
     
     net_cls = "r" if net_today < 0 else "g"
     lv_idx  = next((i for i, (t, _) in enumerate(LEVELS) if t == level_min), 0)
