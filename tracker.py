@@ -949,88 +949,197 @@ with st.sidebar:
 if "Input" in menu:
     if sheet_err: st.warning("⚠️ "+str(sheet_err))
 
-    # ── Fire level up popup ───────────────────────────────────────────────────
+# ── Fire level up popup ───────────────────────────────────────────────────
     if st.session_state.get("level_up_pending"):
         lup = st.session_state.level_up_pending
         st.session_state.level_up_pending = None
+
         name_js  = lup["name"].replace("'", "\\'")
         cat_js   = lup["cat"]
         color_js = lup["color"]
         xp_js    = lup["xp"]
+
+        # Sub message & emoji per level
         idx_map  = {"kitten":0,"kampung":1,"oyen":2,"garong":3,"elite":4,"sultan":5,"king":6}
-        sub_msg  = ["Perjalananmu dimulai!","Makin jago nih!","Konsisten banget!","Kamu keren banget!","Level dewa!","Sultan sejati!","Raja Paw telah bangkit!"][idx_map.get(cat_js, 0)]
+        idx      = idx_map.get(cat_js, 0)
+        sub_msgs = ["Perjalananmu dimulai!","Makin jago nih!","Konsisten banget!","Kamu keren banget!","CATZILLA! Level dewa!","Sultan sejati!","Raja Paw telah bangkit!"]
+        emojis   = ["🐱","😸","🐈","😼","🐆","👑","🏆"]
+        next_xps = [100, 300, 600, 1000, 1800, 3000, 3000]
+        btn_grads= [
+            "linear-gradient(135deg,#6b7280,#9ca3af)",
+            "linear-gradient(135deg,#d97706,#fbbf24)",
+            "linear-gradient(135deg,#ea6010,#f97316)",
+            "linear-gradient(135deg,#334155,#64748b)",
+            "linear-gradient(135deg,#5b21b6,#7c3aed)",
+            "linear-gradient(135deg,#991b1b,#dc2626)",
+            "linear-gradient(135deg,#92400e,#d97706)",
+        ]
+        sub_msg  = sub_msgs[idx]
+        emoji    = emojis[idx]
+        next_xp  = next_xps[idx]
+        btn_grad = btn_grads[idx]
+        prog_pct = min(int(xp_js / next_xp * 100), 100) if next_xp > 0 else 100
+        prog_lbl = f"Max Level!" if xp_js >= 3000 else f"→ {next_xp} XP"
+
+        # Catzilla SVG untuk level elite
+        catzilla_svg = """<svg width="90" height="90" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="50" cy="96" rx="28" ry="4" fill="rgba(91,33,182,0.15)"/>
+          <path d="M72 80 Q88 72 84 58 Q82 50 76 54 Q80 44 72 48 Q74 38 66 44 Q68 34 60 38" stroke="#5b21b6" stroke-width="5" stroke-linecap="round" fill="none"/>
+          <polygon points="84,58 90,52 82,50" fill="#7c3aed" opacity="0.8"/>
+          <polygon points="76,54 83,49 75,46" fill="#7c3aed" opacity="0.7"/>
+          <polygon points="72,48 78,42 70,41" fill="#7c3aed" opacity="0.6"/>
+          <ellipse cx="48" cy="72" rx="26" ry="20" fill="#7c3aed"/>
+          <ellipse cx="48" cy="76" rx="16" ry="12" fill="#c4b5fd" opacity="0.5"/>
+          <ellipse cx="34" cy="62" rx="5" ry="3" fill="#5b21b6" opacity="0.5" transform="rotate(-20 34 62)"/>
+          <ellipse cx="62" cy="62" rx="5" ry="3" fill="#5b21b6" opacity="0.5" transform="rotate(20 62 62)"/>
+          <ellipse cx="26" cy="73" rx="8" ry="6" fill="#7c3aed" transform="rotate(-20 26 73)"/>
+          <line x1="20" y1="76" x2="17" y2="80" stroke="#4c1d95" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="23" y1="78" x2="21" y2="82" stroke="#4c1d95" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="26" y1="79" x2="25" y2="83" stroke="#4c1d95" stroke-width="1.5" stroke-linecap="round"/>
+          <ellipse cx="70" cy="73" rx="8" ry="6" fill="#7c3aed" transform="rotate(20 70 73)"/>
+          <line x1="76" y1="76" x2="79" y2="80" stroke="#4c1d95" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="73" y1="78" x2="75" y2="82" stroke="#4c1d95" stroke-width="1.5" stroke-linecap="round"/>
+          <ellipse cx="36" cy="89" rx="10" ry="7" fill="#7c3aed"/>
+          <ellipse cx="60" cy="89" rx="10" ry="7" fill="#7c3aed"/>
+          <line x1="29" y1="93" x2="26" y2="97" stroke="#4c1d95" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="33" y1="94" x2="31" y2="98" stroke="#4c1d95" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="55" y1="93" x2="53" y2="97" stroke="#4c1d95" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="59" y1="94" x2="58" y2="98" stroke="#4c1d95" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="63" y1="93" x2="65" y2="97" stroke="#4c1d95" stroke-width="1.5" stroke-linecap="round"/>
+          <ellipse cx="48" cy="52" rx="16" ry="10" fill="#7c3aed"/>
+          <ellipse cx="48" cy="36" rx="22" ry="20" fill="#7c3aed"/>
+          <polygon points="48,6 52,16 44,16" fill="#5b21b6"/>
+          <polygon points="42,10 46,19 38,20" fill="#5b21b6" opacity="0.85"/>
+          <polygon points="54,10 58,19 50,20" fill="#5b21b6" opacity="0.85"/>
+          <polygon points="36,16 39,24 32,25" fill="#5b21b6" opacity="0.7"/>
+          <polygon points="60,16 63,24 56,25" fill="#5b21b6" opacity="0.7"/>
+          <polygon points="30,22 24,6 40,20" fill="#7c3aed"/>
+          <polygon points="31,21 26,9 38,20" fill="#c4b5fd" opacity="0.7"/>
+          <polygon points="66,22 72,6 56,20" fill="#7c3aed"/>
+          <polygon points="65,21 70,9 58,20" fill="#c4b5fd" opacity="0.7"/>
+          <ellipse cx="30" cy="42" rx="8" ry="6" fill="#c4b5fd" opacity="0.25"/>
+          <ellipse cx="66" cy="42" rx="8" ry="6" fill="#c4b5fd" opacity="0.25"/>
+          <ellipse cx="39" cy="36" rx="8" ry="8" fill="#1e1b4b"/>
+          <ellipse cx="57" cy="36" rx="8" ry="8" fill="#1e1b4b"/>
+          <ellipse cx="39" cy="36" rx="5" ry="6" fill="#7c3aed"/>
+          <ellipse cx="57" cy="36" rx="5" ry="6" fill="#7c3aed"/>
+          <ellipse cx="39" cy="36" rx="2" ry="5" fill="#0a0020"/>
+          <ellipse cx="57" cy="36" rx="2" ry="5" fill="#0a0020"/>
+          <circle cx="42" cy="33" r="2" fill="white" opacity="0.9"/>
+          <circle cx="60" cy="33" r="2" fill="white" opacity="0.9"/>
+          <ellipse cx="39" cy="36" rx="8" ry="8" fill="none" stroke="#a78bfa" stroke-width="1.5" opacity="0.6"/>
+          <ellipse cx="57" cy="36" rx="8" ry="8" fill="none" stroke="#a78bfa" stroke-width="1.5" opacity="0.6"/>
+          <path d="M44 46 Q48 43 52 46 Q48 50 44 46Z" fill="#c4b5fd"/>
+          <path d="M38 51 Q43 56 48 53 Q53 56 58 51" stroke="#4c1d95" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <polygon points="43,52 41,58 45,52" fill="white" opacity="0.9"/>
+          <polygon points="53,52 51,58 55,52" fill="white" opacity="0.9"/>
+          <line x1="8" y1="42" x2="32" y2="44" stroke="#4c1d95" stroke-width="1.2" opacity="0.3"/>
+          <line x1="8" y1="46" x2="32" y2="46" stroke="#4c1d95" stroke-width="1.2" opacity="0.3"/>
+          <line x1="88" y1="42" x2="64" y2="44" stroke="#4c1d95" stroke-width="1.2" opacity="0.3"/>
+          <line x1="88" y1="46" x2="64" y2="46" stroke="#4c1d95" stroke-width="1.2" opacity="0.3"/>
+          <circle cx="62" cy="54" r="2" fill="#fbbf24" opacity="0.8"/>
+          <circle cx="66" cy="50" r="1.5" fill="#fbbf24" opacity="0.6"/>
+        </svg>"""
+
+        icon_html = catzilla_svg if cat_js == "elite" else f'<span style="font-size:72px;display:block;line-height:1">{emoji}</span>'
+
         components.html(f"""<!DOCTYPE html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
-html,body{{width:100%;height:100%;overflow:hidden;background:transparent;display:flex;align-items:center;justify-content:center}}
-.ov{{position:fixed;inset:0;background:rgba(44,40,37,0.65);display:flex;align-items:center;justify-content:center}}
-.box{{background:#fff;border-radius:22px;padding:28px 32px;text-align:center;width:300px;position:relative;overflow:hidden;border:1.5px solid #e8e2de;animation:popIn .45s cubic-bezier(.34,1.56,.64,1) both;box-shadow:0 20px 60px rgba(44,40,37,0.25)}}
-@keyframes popIn{{0%{{transform:scale(0.3);opacity:0}}70%{{transform:scale(1.05)}}100%{{transform:scale(1);opacity:1}}}}
-@keyframes bounce{{0%,100%{{transform:translateY(0)}}30%{{transform:translateY(-12px)}}60%{{transform:translateY(-5px)}}}}
-.cat-svg{{animation:bounce 1s ease-in-out 0.5s 3}}
-canvas{{position:absolute;inset:0;pointer-events:none;border-radius:22px}}
-.paw-bg{{position:absolute;font-size:60px;opacity:.04;right:-8px;bottom:-8px;transform:rotate(20deg);pointer-events:none}}
-.badge{{display:inline-block;font-size:10px;font-weight:800;padding:3px 12px;border-radius:999px;background:#f4fae8;color:#5a8020;border:1px solid #c0d98e;margin-bottom:12px;font-family:'Nunito',sans-serif}}
-.ttl{{font-size:18px;font-weight:900;color:#2c2825;margin-bottom:3px;font-family:'Nunito',sans-serif}}
-.sub{{font-size:12px;color:#7a6e6a;margin-bottom:6px;font-family:'Nunito',sans-serif}}
-.xp{{font-size:26px;font-weight:900;margin-bottom:18px;font-family:monospace;color:{color_js}}}
-.btn{{background:linear-gradient(135deg,#88bc77,#2a9640);color:#fff;border:none;border-radius:12px;padding:10px 28px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif}}
-.btn:hover{{transform:translateY(-1px)}}
+html,body{{width:100%;height:100%;overflow:hidden;background:transparent;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif}}
+.ov{{position:fixed;inset:0;background:linear-gradient(135deg,rgba(32,27,81,0.92),rgba(18,15,26,0.97));display:flex;align-items:center;justify-content:center}}
+canvas{{position:absolute;inset:0;pointer-events:none}}
+.card{{background:#fff;border-radius:26px;padding:28px 32px 24px;text-align:center;width:296px;position:relative;z-index:2;box-shadow:0 28px 72px rgba(0,0,0,0.45);animation:pop .55s cubic-bezier(.34,1.56,.64,1) both;overflow:hidden}}
+.card::before{{content:'';position:absolute;inset:0;border-radius:26px;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,0.10),transparent 60%)}}
+@keyframes pop{{0%{{transform:scale(0.15) translateY(60px);opacity:0}}75%{{transform:scale(1.04) translateY(-4px)}}100%{{transform:scale(1) translateY(0);opacity:1}}}}
+@keyframes bounce{{0%,100%{{transform:translateY(0) scale(1)}}30%{{transform:translateY(-14px) scale(1.08)}}60%{{transform:translateY(-5px) scale(1.02)}}}}
+@keyframes roar{{0%,100%{{transform:translateY(0) scale(1) rotate(-2deg)}}25%{{transform:translateY(-12px) scale(1.08) rotate(2deg)}}50%{{transform:translateY(-6px) scale(1.04) rotate(-1deg)}}75%{{transform:translateY(-10px) scale(1.06) rotate(1deg)}}}}
+@keyframes sparkle{{0%,100%{{opacity:0;transform:scale(0.5)}}50%{{opacity:1;transform:scale(1.2)}}}}
+@keyframes prog-in{{0%{{width:0!important}}}}
+.icon-wrap{{display:block;width:90px;height:90px;margin:0 auto 8px;animation:{("roar" if cat_js == "elite" else "bounce")} 1.4s ease-in-out 0.4s 3}}
+.sparkles{{position:absolute;width:100%;height:100%;pointer-events:none;top:0;left:0}}
+.spark{{position:absolute;font-size:13px;color:{color_js};animation:sparkle 1.5s ease-in-out infinite}}
+.badge{{display:inline-flex;align-items:center;gap:5px;border-radius:99px;font-size:11px;font-weight:800;padding:4px 14px;margin-bottom:10px;background:{color_js}22;color:{color_js};border:1.5px solid {color_js}66}}
+.lname{{font-size:19px;font-weight:900;color:#120f1a;margin-bottom:3px;letter-spacing:-.3px}}
+.sub{{font-size:12px;color:#6b7280;margin-bottom:8px;font-weight:600}}
+.xp-num{{font-size:32px;font-weight:900;font-family:monospace;line-height:1;display:block;color:{color_js}}}
+.xp-lbl{{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-top:2px;margin-bottom:16px;display:block}}
+.prog-track{{background:#f3f4f6;border-radius:99px;height:8px;overflow:hidden;margin-bottom:5px}}
+.prog-fill{{height:100%;border-radius:99px;background:{color_js};width:{prog_pct}%;animation:prog-in 1s ease-out 0.3s both}}
+.prog-labels{{display:flex;justify-content:space-between;font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:18px}}
+.btn{{border:none;border-radius:14px;padding:12px 32px;font-size:14px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;color:#fff;width:100%;background:{btn_grad};transition:all .18s;letter-spacing:.2px}}
+.btn:hover{{transform:translateY(-2px);filter:brightness(1.1)}}
 </style></head><body>
 <div class="ov" id="ov">
-  <div class="box">
-    <canvas id="cv"></canvas>
-    <div class="paw-bg">🐾</div>
-    <div class="badge">🎉 Level Up!</div>
-    <div style="width:88px;height:88px;margin:0 auto 10px">
-      <svg class="cat-svg" id="catsvg" width="88" height="88" viewBox="0 0 120 120" fill="none"></svg>
-    </div>
-    <div class="ttl">{name_js}</div>
+  <canvas id="cv"></canvas>
+  <div class="card" id="card">
+    <div class="sparkles" id="sparkles"></div>
+    <div class="icon-wrap" id="iconwrap">{icon_html}</div>
+    <div class="badge">{"⚡ Level Up!" if cat_js == "elite" else "🎉 Level Up!"}</div>
+    <div class="lname">{name_js}</div>
     <div class="sub">{sub_msg}</div>
-    <div class="xp">{xp_js} XP</div>
-    <button class="btn" onclick="cls()">Lanjut →</button>
+    <span class="xp-num">{xp_js}</span>
+    <span class="xp-lbl">XP Total</span>
+    <div class="prog-track"><div class="prog-fill"></div></div>
+    <div class="prog-labels"><span>{xp_js} XP</span><span>{prog_lbl}</span></div>
+    <button class="btn" onclick="cls()">{"ROAR! Lanjut" if cat_js == "elite" else "Lanjut"} &#x2192;</button>
   </div>
 </div>
 <script>
-var CATS={{
-  kitten:function(c,d){{return'<ellipse cx="60" cy="72" rx="28" ry="22" fill="'+c+'"/><ellipse cx="60" cy="52" rx="26" ry="24" fill="'+c+'"/><polygon points="38,36 44,22 50,36" fill="'+d+'"/><polygon points="70,36 76,22 82,36" fill="'+d+'"/><circle cx="53" cy="50" r="4" fill="'+d+'"/><circle cx="67" cy="50" r="4" fill="'+d+'"/><circle cx="54" cy="49" r="1.5" fill="white"/><circle cx="68" cy="49" r="1.5" fill="white"/><path d="M55 62 Q60 65 65 62" stroke="'+d+'" stroke-width="1.5" fill="none" stroke-linecap="round"/><ellipse cx="43" cy="78" rx="7" ry="9" fill="'+c+'"/><ellipse cx="77" cy="78" rx="7" ry="9" fill="'+c+'"/>';}},
-  kampung:function(c,d){{return'<ellipse cx="60" cy="72" rx="30" ry="22" fill="'+c+'"/><ellipse cx="60" cy="50" rx="27" ry="25" fill="'+c+'"/><polygon points="36,35 43,18 52,35" fill="'+d+'"/><polygon points="68,35 77,18 84,35" fill="'+d+'"/><ellipse cx="53" cy="49" r="5" fill="'+d+'"/><circle cx="54.5" cy="48" r="2" fill="white"/><ellipse cx="67" cy="49" r="5" fill="'+d+'"/><circle cx="68.5" cy="48" r="2" fill="white"/><path d="M54 63 Q60 67 66 63" stroke="'+d+'" stroke-width="1.5" fill="none" stroke-linecap="round"/><ellipse cx="42" cy="79" rx="8" ry="10" fill="'+c+'"/><ellipse cx="78" cy="79" rx="8" ry="10" fill="'+c+'"/>';}},
-  oyen:function(c,d){{return'<ellipse cx="60" cy="72" rx="30" ry="22" fill="#f97316"/><ellipse cx="60" cy="50" rx="27" ry="25" fill="#f97316"/><polygon points="35,34 43,16 53,34" fill="#ea6010"/><polygon points="67,34 77,16 85,34" fill="#ea6010"/><ellipse cx="53" cy="48" r="5.5" fill="#1a1a2e"/><circle cx="54.5" cy="46.5" r="2" fill="white"/><ellipse cx="67" cy="48" r="5.5" fill="#1a1a2e"/><circle cx="68.5" cy="46.5" r="2" fill="white"/><path d="M54 63 Q60 67 66 63" stroke="#ea6010" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="42" cy="80" rx="8" ry="10" fill="#f97316"/><ellipse cx="78" cy="80" rx="8" ry="10" fill="#f97316"/>';}},
-  garong:function(c,d){{return'<ellipse cx="60" cy="73" rx="31" ry="22" fill="#374151"/><ellipse cx="60" cy="50" rx="28" ry="26" fill="#374151"/><polygon points="34,33 42,14 52,33" fill="#1f2937"/><polygon points="68,33 78,14 86,33" fill="#1f2937"/><ellipse cx="53" cy="48" r="6" fill="#f59e0b"/><ellipse cx="53" cy="48" r="3" fill="#1a0a00"/><ellipse cx="67" cy="48" r="6" fill="#f59e0b"/><ellipse cx="67" cy="48" r="3" fill="#1a0a00"/><circle cx="54.5" cy="46.5" r="1.5" fill="white"/><circle cx="68.5" cy="46.5" r="1.5" fill="white"/><path d="M54 62 Q60 65 66 62" stroke="#1f2937" stroke-width="1.5" fill="none" stroke-linecap="round"/><ellipse cx="41" cy="80" rx="8" ry="10" fill="#374151"/><ellipse cx="79" cy="80" rx="8" ry="10" fill="#374151"/>';}},
-  elite:function(c,d){{return'<ellipse cx="60" cy="73" rx="31" ry="22" fill="#7c3aed"/><ellipse cx="60" cy="50" rx="28" ry="26" fill="#7c3aed"/><polygon points="34,33 42,14 52,33" fill="#5b21b6"/><polygon points="68,33 78,14 86,33" fill="#5b21b6"/><ellipse cx="53" cy="48" r="6" fill="#c4b5fd"/><ellipse cx="53" cy="48" r="3" fill="#1e1b4b"/><ellipse cx="67" cy="48" r="6" fill="#c4b5fd"/><ellipse cx="67" cy="48" r="3" fill="#1e1b4b"/><circle cx="54.5" cy="46.5" r="1.5" fill="white"/><circle cx="68.5" cy="46.5" r="1.5" fill="white"/><path d="M54 62 Q60 66 66 62" stroke="#5b21b6" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="41" cy="80" rx="8" ry="10" fill="#7c3aed"/><ellipse cx="79" cy="80" rx="8" ry="10" fill="#7c3aed"/><polygon points="52,28 56,18 60,28 54,23" fill="#fbbf24" opacity="0.9"/><polygon points="60,28 64,18 68,28 62,23" fill="#fbbf24" opacity="0.9"/>';}},
-  sultan:function(c,d){{return'<ellipse cx="60" cy="73" rx="32" ry="22" fill="#dc2626"/><ellipse cx="60" cy="50" rx="29" ry="26" fill="#dc2626"/><polygon points="33,33 41,13 52,33" fill="#991b1b"/><polygon points="68,33 79,13 87,33" fill="#991b1b"/><ellipse cx="53" cy="48" r="6.5" fill="#fca5a5"/><ellipse cx="53" cy="48" r="3" fill="#1a0000"/><ellipse cx="67" cy="48" r="6.5" fill="#fca5a5"/><ellipse cx="67" cy="48" r="3" fill="#1a0000"/><circle cx="55" cy="46.5" r="1.5" fill="white"/><circle cx="69" cy="46.5" r="1.5" fill="white"/><path d="M53 63 Q60 67 67 63" stroke="#991b1b" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="40" cy="80" rx="8" ry="11" fill="#dc2626"/><ellipse cx="80" cy="80" rx="8" ry="11" fill="#dc2626"/><rect x="45" y="26" width="30" height="8" rx="4" fill="#fbbf24"/><polygon points="56,14 60,8 64,14" fill="#fbbf24"/>';}},
-  king:function(c,d){{return'<ellipse cx="60" cy="73" rx="32" ry="22" fill="#d97706"/><ellipse cx="60" cy="50" rx="29" ry="26" fill="#d97706"/><polygon points="33,32 41,12 52,32" fill="#b45309"/><polygon points="68,32 79,12 87,32" fill="#b45309"/><ellipse cx="53" cy="47" r="7" fill="#fef3c7"/><ellipse cx="53" cy="47" r="3.5" fill="#1a0e00"/><ellipse cx="67" cy="47" r="7" fill="#fef3c7"/><ellipse cx="67" cy="47" r="3.5" fill="#1a0e00"/><circle cx="55" cy="45.5" r="1.8" fill="white"/><circle cx="69" cy="45.5" r="1.8" fill="white"/><path d="M53 62 Q60 67 67 62" stroke="#b45309" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="40" cy="80" rx="9" ry="11" fill="#d97706"/><ellipse cx="80" cy="80" rx="9" ry="11" fill="#d97706"/><polygon points="42,28 50,8 60,24 70,8 78,28" fill="#fbbf24" stroke="#f59e0b" stroke-width="1"/><circle cx="50" cy="8" r="3" fill="#ef4444"/><circle cx="60" cy="5" r="3.5" fill="#dc2626"/><circle cx="70" cy="8" r="3" fill="#ef4444"/>';}}
-}};
-function lighten(h,a){{var c=parseInt(h.replace('#',''),16);return'#'+[c>>16&255,c>>8&255,c&255].map(function(v){{return Math.min(255,Math.round(v+255*a)).toString(16).padStart(2,'0');}}).join('');}}
-function darken(h,a){{var c=parseInt(h.replace('#',''),16);return'#'+[c>>16&255,c>>8&255,c&255].map(function(v){{return Math.max(0,Math.round(v-255*a)).toString(16).padStart(2,'0');}}).join('');}}
-function confetti(){{
-  var cv=document.getElementById('cv'),ctx=cv.getContext('2d');
-  cv.width=300;cv.height=500;
-  var cols=['{color_js}','#88bc77','#cfe5a4','#f8b2b0','#f59e0b','#a78bfa'];
-  var pts=Array.from({{length:60}},function(){{return{{x:Math.random()*300,y:Math.random()*-60,vx:(Math.random()-.5)*3,vy:Math.random()*3+1.5,sz:Math.random()*7+3,c:cols[Math.floor(Math.random()*cols.length)],r:Math.random()*360,vr:(Math.random()-.5)*6,s:Math.random()>.5?'r':'c'}}}});
-  setInterval(function(){{
-    ctx.clearRect(0,0,300,500);
+var confInt=null;
+function startConfetti(){{
+  var cv=document.getElementById('cv');
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  var ctx=cv.getContext('2d');
+  var cols=['{color_js}','#88bc77','#ccebf2','#f9e2b2','#f37973','#fff','#fbbf24','#a78bfa','#34d399'];
+  var shapes=['star','circle','rect','diamond'];
+  var pts=Array.from({{length:90}},function(){{
+    return{{x:Math.random()*cv.width,y:Math.random()*-150,
+      vx:(Math.random()-.5)*4.5,vy:Math.random()*4+1.5,
+      sz:Math.random()*11+4,c:cols[Math.floor(Math.random()*cols.length)],
+      r:Math.random()*360,vr:(Math.random()-.5)*9,
+      shape:shapes[Math.floor(Math.random()*shapes.length)],
+      alpha:Math.random()*0.35+0.65,
+      wobble:Math.random()*Math.PI*2,ws:Math.random()*0.08+0.02}};
+  }});
+  if(confInt)clearInterval(confInt);
+  confInt=setInterval(function(){{
+    ctx.clearRect(0,0,cv.width,cv.height);
     pts.forEach(function(p){{
-      p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;
-      if(p.y>500){{p.y=-10;p.x=Math.random()*300;}}
+      p.x+=p.vx+Math.sin(p.wobble)*0.8;p.y+=p.vy;p.r+=p.vr;p.wobble+=p.ws;
+      if(p.y>cv.height+20){{p.y=-20;p.x=Math.random()*cv.width;}}
       ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r*Math.PI/180);
-      ctx.fillStyle=p.c;ctx.globalAlpha=.82;
-      if(p.s==='r')ctx.fillRect(-p.sz/2,-p.sz/4,p.sz,p.sz/2);
-      else{{ctx.beginPath();ctx.arc(0,0,p.sz/2,0,Math.PI*2);ctx.fill();}}
+      ctx.fillStyle=p.c;ctx.globalAlpha=p.alpha;
+      var s=p.sz;
+      if(p.shape==='circle'){{ctx.beginPath();ctx.arc(0,0,s/2,0,Math.PI*2);ctx.fill();}}
+      else if(p.shape==='rect'){{ctx.fillRect(-s/2,-s/4,s,s/2);}}
+      else if(p.shape==='diamond'){{ctx.beginPath();ctx.moveTo(0,-s/2);ctx.lineTo(s/2,0);ctx.lineTo(0,s/2);ctx.lineTo(-s/2,0);ctx.closePath();ctx.fill();}}
+      else{{var n=5;ctx.beginPath();for(var i=0;i<n*2;i++){{var a=i*Math.PI/n-Math.PI/2;var r2=i%2===0?s/2:s/4;if(i===0)ctx.moveTo(Math.cos(a)*r2,Math.sin(a)*r2);else ctx.lineTo(Math.cos(a)*r2,Math.sin(a)*r2);}}ctx.closePath();ctx.fill();}}
       ctx.restore();
     }});
   }},16);
 }}
+function addSparkles(){{
+  var sp=document.getElementById('sparkles');sp.innerHTML='';
+  var pos=[[8,12],[82,8],[12,72],[78,68],[48,4],[18,42],[84,48]];
+  pos.forEach(function(p,i){{
+    var s=document.createElement('span');
+    s.textContent='✦';
+    s.style.cssText='left:'+p[0]+'%;top:'+p[1]+'%;position:absolute;font-size:13px;color:{color_js};animation:sparkle 1.5s ease-in-out '+(i*0.2)+'s infinite';
+    sp.appendChild(s);
+  }});
+}}
 function cls(){{
   var o=document.getElementById('ov');
   o.style.transition='opacity .3s';o.style.opacity='0';
+  if(confInt)clearInterval(confInt);
   setTimeout(function(){{o.style.display='none';}},300);
 }}
-var fn=CATS['{cat_js}'];
-if(fn){{document.getElementById('catsvg').innerHTML=fn(lighten('{color_js}',0.42),darken('{color_js}',0.22));}}
-confetti();
+addSparkles();
+startConfetti();
 </script></body></html>""", height=500, scrolling=False)
+    # ── End level up popup ────────────────────────────────────────────────────
     # ─────────────────────────────────────────────────────────────────────────
 
     net_cls = "r" if net_today < 0 else "g"
