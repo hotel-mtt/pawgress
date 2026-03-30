@@ -510,7 +510,11 @@ IDLE_JS = f"""
   setInterval(function(){{
     var elapsed=Date.now()-lastAct;
     var sisa=TIMEOUT-elapsed;
-    if(sisa<=0){{window.location.reload();return;}}
+    if(sisa<=0){{
+      document.cookie='pawgress_idle=1;path=/';
+      window.location.reload();
+      return;
+    }}
     if(elapsed>=WARN_AT){{
       toast.classList.add('show');
       dot.className=sisa<=60000?'danger':'warn';
