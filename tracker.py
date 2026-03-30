@@ -497,30 +497,46 @@ IDLE_JS = f"""
 <div id="idle-toast"><div id="idle-dot"></div><span id="idle-txt">Sesi aktif</span></div>
 <script>
 (function(){{
-  var TIMEOUT={IDLE_TIMEOUT_MS};
-  var WARN_AT=TIMEOUT-5*60*1000;
-  var lastAct=Date.now();
-  var toast=document.getElementById('idle-toast');
-  var dot=document.getElementById('idle-dot');
-  var txt=document.getElementById('idle-txt');
+  var TIMEOUT = {IDLE_TIMEOUT_MS};
+  var WARN_AT = TIMEOUT - 2 * 60 * 1000;
+  var lastAct = Date.now();
+  var toast = document.getElementById('idle-toast');
+  var dot   = document.getElementById('idle-dot');
+  var txt   = document.getElementById('idle-txt');
+
   ['mousemove','keydown','mousedown','touchstart','scroll','click'].forEach(function(ev){{
-    document.addEventListener(ev,function(){{lastAct=Date.now();}},{{passive:true}});
+    document.addEventListener(ev, function(){{
+      lastAct = Date.now();
+    }}, {{passive: true}});
   }});
-  function fmt(ms){{var s=Math.ceil(ms/1000);return Math.floor(s/60)+'m '+(s%60<10?'0':'')+s%60+'s';}}
+
+  function fmt(ms){{
+    var s = Math.ceil(ms/1000);
+    return Math.floor(s/60) + 'm ' + (s%60 < 10 ? '0' : '') + s%60 + 's';
+  }}
+
   setInterval(function(){{
-    var elapsed=Date.now()-lastAct;
-    var sisa=TIMEOUT-elapsed;
-    if(sisa<=0){{
-      document.cookie='pawgress_idle=1;path=/';
+    var elapsed = Date.now() - lastAct;
+    var sisa    = TIMEOUT - elapsed;
+
+    if(sisa <= 0){{
       window.location.reload();
       return;
     }}
-    if(elapsed>=WARN_AT){{
+
+    if(elapsed >= WARN_AT){{
       toast.classList.add('show');
-      dot.className=sisa<=60000?'danger':'warn';
-      txt.textContent=sisa<=60000?'⚠ Logout otomatis: '+fmt(sisa):'Idle · Logout dalam '+fmt(sisa);
-    }}else{{toast.classList.remove('show');dot.className='';txt.textContent='Sesi aktif';}}
-  }},1000);
+      dot.className = sisa <= 60000 ? 'danger' : 'warn';
+      txt.textContent = sisa <= 60000
+        ? '⚠ Logout otomatis: ' + fmt(sisa)
+        : 'Idle · Logout dalam ' + fmt(sisa);
+    }} else {{
+      toast.classList.remove('show');
+      dot.className = '';
+      txt.textContent = 'Sesi aktif';
+    }}
+  }}, 1000);
+
 }})();
 </script>
 """
