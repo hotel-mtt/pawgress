@@ -885,9 +885,7 @@ if "Input" in menu:
         prog_pct = min(int(xp_js / next_xp * 100), 100) if next_xp > 0 else 100
         prog_lbl = "Max Level!" if xp_js >= 3000 else f"&#x2192; {next_xp} XP"
 
-        # ─────────────────────────────────────────────────────────────────────
-        # FIXED: button pakai onclick langsung, bukan addEventListener
-        # ─────────────────────────────────────────────────────────────────────
+        # ── FIX 1: Tombol menggunakan addEventListener, bukan onclick inline ──
         st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
@@ -897,6 +895,7 @@ if "Input" in menu:
   backdrop-filter:blur(4px);
   -webkit-backdrop-filter:blur(4px);
   display:flex;align-items:center;justify-content:center;
+  pointer-events:auto;
 }}
 #lup-canvas{{
   position:fixed;inset:0;
@@ -915,6 +914,7 @@ if "Input" in menu:
   box-shadow:0 20px 60px rgba(18,15,26,0.28);
   animation:lupPop .45s cubic-bezier(.34,1.56,.64,1) both;
   font-family:'Nunito',sans-serif;
+  pointer-events:auto;
 }}
 @keyframes lupPop{{
   0%{{transform:scale(0.4);opacity:0}}
@@ -991,6 +991,7 @@ if "Input" in menu:
   pointer-events:auto;
   position:relative;
   z-index:1000001;
+  display:block;
 }}
 #lup-btn:hover{{opacity:.88;transform:translateY(-1px);}}
 #lup-btn:active{{transform:translateY(0);opacity:1;}}
@@ -1013,20 +1014,25 @@ if "Input" in menu:
       <span>{xp_js} XP</span>
       <span>{prog_lbl}</span>
     </div>
-    <button id="lup-btn" onclick="
-      var ov=document.getElementById('lup-overlay');
-      var cv=document.getElementById('lup-canvas');
-      if(ov){{ov.style.transition='opacity .25s';ov.style.opacity='0';}}
-      if(window._lupConfInt){{clearInterval(window._lupConfInt);window._lupConfInt=null;}}
-      if(cv)cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
-      setTimeout(function(){{if(ov)ov.style.display='none';if(cv)cv.style.display='none';}},260);
-    ">Lanjut &#x2192;</button>
+    <button id="lup-btn" type="button">Lanjut &#x2192;</button>
   </div>
 </div>
 
 <script>
 (function(){{
   window._lupConfInt = null;
+
+  function dismissLup() {{
+    var ov = document.getElementById('lup-overlay');
+    var cv = document.getElementById('lup-canvas');
+    if(ov) {{ ov.style.transition = 'opacity .25s'; ov.style.opacity = '0'; }}
+    if(window._lupConfInt) {{ clearInterval(window._lupConfInt); window._lupConfInt = null; }}
+    if(cv) {{ cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); }}
+    setTimeout(function() {{
+      if(ov) ov.style.display = 'none';
+      if(cv) cv.style.display = 'none';
+    }}, 260);
+  }}
 
   function lupBurst(){{
     var cv = document.getElementById('lup-canvas');
@@ -1103,6 +1109,18 @@ if "Input" in menu:
   var pf = document.getElementById('lup-prog-fill');
   if(pf) setTimeout(function(){{ pf.style.width = '{prog_pct}%'; }}, 120);
   lupBurst();
+
+  // Bind tombol Lanjut via addEventListener (reliable di iframe Streamlit)
+  setTimeout(function() {{
+    var btn = document.getElementById('lup-btn');
+    if(btn) {{
+      btn.addEventListener('click', function(e) {{
+        e.preventDefault();
+        e.stopPropagation();
+        dismissLup();
+      }});
+    }}
+  }}, 50);
 }})();
 </script>
 """, unsafe_allow_html=True)
@@ -1163,24 +1181,46 @@ if "Input" in menu:
                 fc3, fc4 = st.columns(2)
                 with fc3: hotel = st.text_input("🏩 Nama Hotel", placeholder="Opsional")
                 with fc4: notes = st.text_area("📝 Catatan", placeholder="Detail...", height=68)
+
+                # ── Hitung hari diff & urgency ────────────────────────────────
                 hari_diff = None
                 is_urgent = False
                 if checkin_date is not None:
                     hari_diff = (checkin_date - date.today()).days
                     is_urgent = hari_diff <= 1
+
+                # ── FIX 2: Validasi Booking Urgent hanya H+0 / H+1 ───────────
+                urgent_blocked = False
+
                 if checkin_date is None:
                     st.markdown('<div class="strip neut">📅 Isi tanggal check-in untuk deteksi urgency</div>', unsafe_allow_html=True)
+                    if sel_item == "Booking Urgent":
+                        st.markdown('<div class="strip warn">⚠️ <b>Booking Urgent</b> wajib mengisi tanggal check-in (H+0 atau H+1).</div>', unsafe_allow_html=True)
+                        urgent_blocked = True
+                elif hari_diff < 0:
+                    st.markdown('<div class="strip warn">⚠️ Tanggal check-in sudah lewat!</div>', unsafe_allow_html=True)
+                    if sel_item == "Booking Urgent":
+                        urgent_blocked = True
                 elif is_urgent:
                     label = "hari ini" if hari_diff == 0 else "besok"
-                    st.markdown(f'<div class="strip urg">⚡ Check-in {label}! Disarankan pilih <b>Booking Urgent (+25 XP)</b></div>', unsafe_allow_html=True)
+                    if sel_item == "Booking Urgent":
+                        st.markdown(f'<div class="strip urg">⚡ Check-in {label}! Booking Urgent valid ✓</div>', unsafe_allow_html=True)
+                    else:
+                        st.markdown(f'<div class="strip urg">⚡ Check-in {label}! Disarankan pilih <b>Booking Urgent (+25 XP)</b></div>', unsafe_allow_html=True)
                 else:
                     st.markdown(f'<div class="strip safe">✅ Check-in {hari_diff} hari lagi — Normal</div>', unsafe_allow_html=True)
-                if is_urgent and sel_item != "Booking Urgent":
+                    if sel_item == "Booking Urgent":
+                        st.markdown(f'<div class="strip warn">⚠️ <b>Booking Urgent hanya untuk check-in hari ini (H+0) atau besok (H+1).</b> Check-in masih {hari_diff} hari lagi — gunakan <b>Booking Hotel</b>.</div>', unsafe_allow_html=True)
+                        urgent_blocked = True
+
+                if not urgent_blocked and is_urgent and checkin_date is not None and sel_item != "Booking Urgent":
                     st.markdown(f'<div class="strip warn">⚠ Memilih <b>{sel_item}</b> padahal check-in mepet. Pastikan disengaja.</div>', unsafe_allow_html=True)
+
             else:
-                task_status  = default_status
-                prev_xp      = pts
-                pc1, pc2     = st.columns(2)
+                task_status   = default_status
+                prev_xp       = pts
+                urgent_blocked = False  # Penalti tidak ada constraint urgency
+                pc1, pc2      = st.columns(2)
                 with pc1: bid2  = st.text_input("🔖 Booking ID", placeholder="Opsional")
                 with pc2: notes = st.text_input("📝 Keterangan", placeholder="Ceritakan singkat...")
                 hotel        = "-"
@@ -1195,7 +1235,10 @@ if "Input" in menu:
 
             if form_submitted:
                 update_activity()
-                if ws1 is None:
+                # ── FIX 2: Blokir submit jika Booking Urgent tidak valid ──────
+                if sel_item == "Booking Urgent" and urgent_blocked:
+                    st.error("❌ Booking Urgent hanya berlaku untuk check-in hari ini (H+0) atau besok (H+1). Silakan pilih Booking Hotel untuk tanggal tersebut.")
+                elif ws1 is None:
                     st.error("❌ Google Sheets tidak terhubung.")
                 else:
                     nj = datetime.now(TZ_JKT)
