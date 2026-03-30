@@ -26,7 +26,7 @@ SLA_TARGET           = 60
 DONE_BONUS           = 5
 QC_BONUS             = 10
 QC_FOUND_BONUS       = 15
-IDLE_TIMEOUT_MINUTES = 15          # ← satu tempat, dipakai di Python & JS
+IDLE_TIMEOUT_MINUTES = 15
 IDLE_TIMEOUT_MS      = IDLE_TIMEOUT_MINUTES * 60 * 1000
 
 TASK_TYPES = {
@@ -403,96 +403,7 @@ body::after{content:'🐾';position:fixed;font-size:120px;opacity:0.04;bottom:30
 <div class="lc-paw3">🐾</div>
 """
 
-# ── Level Up Popup HTML (dipakai di components.html utama) ────────────────────
-LEVEL_UP_IFRAME_HTML = """<!DOCTYPE html><html><head><style>
-html,body{margin:0;padding:0;overflow:hidden;background:transparent}
-#lup-overlay{position:fixed;inset:0;background:rgba(0,0,0,0);pointer-events:none;z-index:999999;display:flex;align-items:center;justify-content:center;transition:background .3s}
-#lup-overlay.show{background:rgba(44,40,37,0.65);pointer-events:auto}
-.lup-box{background:#fff;border-radius:22px;padding:28px 32px;text-align:center;width:300px;transform:scale(0.4);opacity:0;transition:transform .45s cubic-bezier(.34,1.56,.64,1),opacity .3s;position:relative;overflow:hidden;border:1.5px solid #e8e2de}
-#lup-overlay.show .lup-box{transform:scale(1);opacity:1}
-.lup-bdg{display:inline-block;font-size:10px;font-weight:800;padding:3px 12px;border-radius:999px;background:#f4fae8;color:#5a8020;border:1px solid #c0d98e;margin-bottom:12px;font-family:'Nunito',sans-serif}
-.lup-ttl{font-size:19px;font-weight:900;color:#2c2825;margin-bottom:3px;font-family:'Nunito',sans-serif}
-.lup-sub{font-size:12px;color:#7a6e6a;margin-bottom:6px;font-family:'Nunito',sans-serif}
-.lup-xp{font-size:26px;font-weight:900;margin-bottom:18px;font-family:monospace}
-.lup-cv{position:absolute;inset:0;pointer-events:none;border-radius:22px}
-.paw-bg{position:absolute;font-size:64px;opacity:.04;right:-10px;bottom:-10px;transform:rotate(20deg);pointer-events:none}
-@keyframes lup-b{0%,100%{transform:translateY(0)}30%{transform:translateY(-10px)}60%{transform:translateY(-4px)}}
-.lup-cat{animation:lup-b 1s ease-in-out 0.4s 3}
-.lup-btn{background:linear-gradient(135deg,#88bc77,#2a9640);color:#fff;border:none;border-radius:12px;padding:10px 28px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .15s}
-.lup-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(60,174,80,.35)}
-</style></head><body>
-<div id="lup-overlay">
-  <div class="lup-box">
-    <canvas class="lup-cv" id="lup-cv"></canvas>
-    <div class="paw-bg">🐾</div>
-    <div class="lup-bdg">🎉 Level Up!</div>
-    <div style="width:90px;height:90px;margin:0 auto 10px">
-      <svg class="lup-cat" id="lup-svg" width="90" height="90" viewBox="0 0 120 120" fill="none"></svg>
-    </div>
-    <div class="lup-ttl" id="lup-ttl">Level Baru!</div>
-    <div class="lup-sub" id="lup-sub">Selamat naik level!</div>
-    <div class="lup-xp" id="lup-xp">0 XP</div>
-    <button class="lup-btn" onclick="lupClose()">Lanjut &#x2192;</button>
-  </div>
-</div>
-<script>
-var lupConf=null;
-var CATS={
-  kitten:function(c,d){return'<ellipse cx="60" cy="72" rx="28" ry="22" fill="'+c+'"/><ellipse cx="60" cy="52" rx="26" ry="24" fill="'+c+'"/><polygon points="38,36 44,22 50,36" fill="'+d+'"/><polygon points="70,36 76,22 82,36" fill="'+d+'"/><circle cx="53" cy="50" r="4" fill="'+d+'"/><circle cx="67" cy="50" r="4" fill="'+d+'"/><circle cx="54" cy="49" r="1.5" fill="white"/><circle cx="68" cy="49" r="1.5" fill="white"/><path d="M55 62 Q60 65 65 62" stroke="'+d+'" stroke-width="1.5" fill="none" stroke-linecap="round"/><ellipse cx="43" cy="78" rx="7" ry="9" fill="'+c+'"/><ellipse cx="77" cy="78" rx="7" ry="9" fill="'+c+'"/>';},
-  kampung:function(c,d){return'<ellipse cx="60" cy="72" rx="30" ry="22" fill="'+c+'"/><ellipse cx="60" cy="50" rx="27" ry="25" fill="'+c+'"/><polygon points="36,35 43,18 52,35" fill="'+d+'"/><polygon points="68,35 77,18 84,35" fill="'+d+'"/><ellipse cx="53" cy="49" r="5" fill="'+d+'"/><circle cx="54.5" cy="48" r="2" fill="white"/><ellipse cx="67" cy="49" r="5" fill="'+d+'"/><circle cx="68.5" cy="48" r="2" fill="white"/><path d="M54 63 Q60 67 66 63" stroke="'+d+'" stroke-width="1.5" fill="none" stroke-linecap="round"/><ellipse cx="42" cy="79" rx="8" ry="10" fill="'+c+'"/><ellipse cx="78" cy="79" rx="8" ry="10" fill="'+c+'"/>';},
-  oyen:function(c,d){return'<ellipse cx="60" cy="72" rx="30" ry="22" fill="#f97316"/><ellipse cx="60" cy="50" rx="27" ry="25" fill="#f97316"/><polygon points="35,34 43,16 53,34" fill="#ea6010"/><polygon points="67,34 77,16 85,34" fill="#ea6010"/><ellipse cx="53" cy="48" r="5.5" fill="#1a1a2e"/><circle cx="54.5" cy="46.5" r="2" fill="white"/><ellipse cx="67" cy="48" r="5.5" fill="#1a1a2e"/><circle cx="68.5" cy="46.5" r="2" fill="white"/><path d="M54 63 Q60 67 66 63" stroke="#ea6010" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="42" cy="80" rx="8" ry="10" fill="#f97316"/><ellipse cx="78" cy="80" rx="8" ry="10" fill="#f97316"/>';},
-  garong:function(c,d){return'<ellipse cx="60" cy="73" rx="31" ry="22" fill="#374151"/><ellipse cx="60" cy="50" rx="28" ry="26" fill="#374151"/><polygon points="34,33 42,14 52,33" fill="#1f2937"/><polygon points="68,33 78,14 86,33" fill="#1f2937"/><ellipse cx="53" cy="48" r="6" fill="#f59e0b"/><ellipse cx="53" cy="48" r="3" fill="#1a0a00"/><ellipse cx="67" cy="48" r="6" fill="#f59e0b"/><ellipse cx="67" cy="48" r="3" fill="#1a0a00"/><circle cx="54.5" cy="46.5" r="1.5" fill="white"/><circle cx="68.5" cy="46.5" r="1.5" fill="white"/><path d="M54 62 Q60 65 66 62" stroke="#1f2937" stroke-width="1.5" fill="none" stroke-linecap="round"/><ellipse cx="41" cy="80" rx="8" ry="10" fill="#374151"/><ellipse cx="79" cy="80" rx="8" ry="10" fill="#374151"/>';},
-  elite:function(c,d){return'<ellipse cx="60" cy="73" rx="31" ry="22" fill="#7c3aed"/><ellipse cx="60" cy="50" rx="28" ry="26" fill="#7c3aed"/><polygon points="34,33 42,14 52,33" fill="#5b21b6"/><polygon points="68,33 78,14 86,33" fill="#5b21b6"/><ellipse cx="53" cy="48" r="6" fill="#c4b5fd"/><ellipse cx="53" cy="48" r="3" fill="#1e1b4b"/><ellipse cx="67" cy="48" r="6" fill="#c4b5fd"/><ellipse cx="67" cy="48" r="3" fill="#1e1b4b"/><circle cx="54.5" cy="46.5" r="1.5" fill="white"/><circle cx="68.5" cy="46.5" r="1.5" fill="white"/><path d="M54 62 Q60 66 66 62" stroke="#5b21b6" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="41" cy="80" rx="8" ry="10" fill="#7c3aed"/><ellipse cx="79" cy="80" rx="8" ry="10" fill="#7c3aed"/><polygon points="52,28 56,18 60,28 54,23" fill="#fbbf24" opacity="0.9"/><polygon points="60,28 64,18 68,28 62,23" fill="#fbbf24" opacity="0.9"/>';},
-  sultan:function(c,d){return'<ellipse cx="60" cy="73" rx="32" ry="22" fill="#dc2626"/><ellipse cx="60" cy="50" rx="29" ry="26" fill="#dc2626"/><polygon points="33,33 41,13 52,33" fill="#991b1b"/><polygon points="68,33 79,13 87,33" fill="#991b1b"/><ellipse cx="53" cy="48" r="6.5" fill="#fca5a5"/><ellipse cx="53" cy="48" r="3" fill="#1a0000"/><ellipse cx="67" cy="48" r="6.5" fill="#fca5a5"/><ellipse cx="67" cy="48" r="3" fill="#1a0000"/><circle cx="55" cy="46.5" r="1.5" fill="white"/><circle cx="69" cy="46.5" r="1.5" fill="white"/><path d="M53 63 Q60 67 67 63" stroke="#991b1b" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="40" cy="80" rx="8" ry="11" fill="#dc2626"/><ellipse cx="80" cy="80" rx="8" ry="11" fill="#dc2626"/><rect x="45" y="26" width="30" height="8" rx="4" fill="#fbbf24"/><polygon points="56,14 60,8 64,14" fill="#fbbf24"/>';},
-  king:function(c,d){return'<ellipse cx="60" cy="73" rx="32" ry="22" fill="#d97706"/><ellipse cx="60" cy="50" rx="29" ry="26" fill="#d97706"/><polygon points="33,32 41,12 52,32" fill="#b45309"/><polygon points="68,32 79,12 87,32" fill="#b45309"/><ellipse cx="53" cy="47" r="7" fill="#fef3c7"/><ellipse cx="53" cy="47" r="3.5" fill="#1a0e00"/><ellipse cx="67" cy="47" r="7" fill="#fef3c7"/><ellipse cx="67" cy="47" r="3.5" fill="#1a0e00"/><circle cx="55" cy="45.5" r="1.8" fill="white"/><circle cx="69" cy="45.5" r="1.8" fill="white"/><path d="M53 62 Q60 67 67 62" stroke="#b45309" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="40" cy="80" rx="9" ry="11" fill="#d97706"/><ellipse cx="80" cy="80" rx="9" ry="11" fill="#d97706"/><polygon points="42,28 50,8 60,24 70,8 78,28" fill="#fbbf24" stroke="#f59e0b" stroke-width="1"/><circle cx="50" cy="8" r="3" fill="#ef4444"/><circle cx="60" cy="5" r="3.5" fill="#dc2626"/><circle cx="70" cy="8" r="3" fill="#ef4444"/>';}
-};
-var MSGS=['Perjalananmu dimulai!','Makin jago nih!','Konsisten banget!','Kamu keren banget!','Level dewa!','Sultan sejati!','Raja Paw telah bangkit!'];
-var LEVEL_IDX={'🐾 Kitten':0,'🐱 Kucing Kampung':1,'🐈 Oyen':2,'🐈‍⬛ Kucing Garong':3,'🐆 Kucing Elite':4,'🐅 Kucing Sultan':5,'👑 King of Paw':6};
-function lighten(h,a){var c=parseInt(h.replace('#',''),16);return'#'+[c>>16&255,c>>8&255,c&255].map(function(v){return Math.min(255,Math.round(v+255*a)).toString(16).padStart(2,'0');}).join('');}
-function darken(h,a){var c=parseInt(h.replace('#',''),16);return'#'+[c>>16&255,c>>8&255,c&255].map(function(v){return Math.max(0,Math.round(v-255*a)).toString(16).padStart(2,'0');}).join('');}
-function lupClose(){
-  document.getElementById('lup-overlay').classList.remove('show');
-  if(lupConf){clearInterval(lupConf);lupConf=null;}
-  var cv=document.getElementById('lup-cv');
-  cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
-}
-function startConfetti(color){
-  var cv=document.getElementById('lup-cv');var ctx=cv.getContext('2d');
-  cv.width=300;cv.height=460;
-  var cols=[color,'#88bc77','#cfe5a4','#f8b2b0','#f59e0b','#a78bfa'];
-  var pts=Array.from({length:55},function(){return{x:Math.random()*300,y:Math.random()*-60,vx:(Math.random()-.5)*3,vy:Math.random()*3+1.5,sz:Math.random()*6+3,c:cols[Math.floor(Math.random()*cols.length)],r:Math.random()*360,vr:(Math.random()-.5)*6,s:Math.random()>.5?'r':'c'};});
-  if(lupConf)clearInterval(lupConf);
-  lupConf=setInterval(function(){
-    ctx.clearRect(0,0,300,460);
-    pts.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;if(p.y>460){p.y=-10;p.x=Math.random()*300;}ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r*Math.PI/180);ctx.fillStyle=p.c;ctx.globalAlpha=.8;if(p.s==='r')ctx.fillRect(-p.sz/2,-p.sz/4,p.sz,p.sz/2);else{ctx.beginPath();ctx.arc(0,0,p.sz/2,0,Math.PI*2);ctx.fill();}ctx.restore();});
-  },16);
-}
-function lupShow(name,xp,catType,color){
-  var idx=LEVEL_IDX[name]||0;
-  document.getElementById('lup-ttl').textContent=name;
-  document.getElementById('lup-xp').textContent=xp+' XP';
-  document.getElementById('lup-xp').style.color=color;
-  document.getElementById('lup-sub').textContent=MSGS[idx];
-  var svg=document.getElementById('lup-svg');
-  var fn=CATS[catType];
-  if(fn&&svg){
-    var light=lighten(color,0.42);var dk=darken(color,0.22);
-    svg.innerHTML=fn(light,dk);
-    svg.style.animation='none';
-    setTimeout(function(){svg.style.animation='lup-b 1s ease-in-out 0.4s 3';},10);
-  }
-  startConfetti(color);
-  document.getElementById('lup-overlay').classList.add('show');
-}
-window.addEventListener('message',function(e){
-  if(e.data&&e.data.type==='lup_trigger'){
-    lupShow(e.data.name,e.data.xp,e.data.cat,e.data.color);
-  }
-});
-</script>
-</body></html>"""
-
-# ── Idle JS (inline di markdown, BUKAN iframe) ────────────────────────────────
+# ── Idle JS ───────────────────────────────────────────────────────────────────
 IDLE_JS = f"""
 <div id="idle-toast"><div id="idle-dot"></div><span id="idle-txt">Sesi aktif</span></div>
 <script>
@@ -529,6 +440,7 @@ IDLE_JS = f"""
 }})();
 </script>
 """
+
 # ── Google Sheets ─────────────────────────────────────────────────────────────
 @st.cache_resource(ttl=3600)
 def _get_or_create_ws(_wb, name, rows, cols):
@@ -718,11 +630,9 @@ def get_absent_staff(df, today_str):
     return [s for s in flat if s not in present]
 
 def update_activity():
-    """Catat timestamp aktivitas terakhir."""
     st.session_state.last_activity = datetime.now(TZ_JKT)
 
 def check_idle_timeout():
-    """Return True jika idle timeout tercapai dan sudah logout."""
     if not st.session_state.get("logged_in"): return False
     last = st.session_state.get("last_activity")
     if last is None:
@@ -733,7 +643,6 @@ def check_idle_timeout():
     return False
 
 def _do_auto_logout():
-    """Logout otomatis + catat ke Session Log."""
     try:
         nj_out = datetime.now(TZ_JKT)
         out_ts = nj_out.strftime("%Y-%m-%d %H:%M:%S") + " WIB"
@@ -783,11 +692,9 @@ if not st.session_state.logged_in and "u" in _qp and "r" in _qp:
         st.session_state.current_user=_user
         st.session_state.current_role=_role
 
-# ── Cek idle timeout SETIAP render (server-side) ──────────────────────────────
 if check_idle_timeout():
     st.rerun()
 
-# Set aktivitas awal jika baru login
 if st.session_state.logged_in and st.session_state.last_activity is None:
     update_activity()
 
@@ -812,7 +719,6 @@ if st.session_state.logged_in:
 if not st.session_state.logged_in:
     st.markdown(LOGIN_CSS, unsafe_allow_html=True)
 
-    # Notif auto-logout
     if st.session_state.get("auto_logout_msg"):
         st.session_state.auto_logout_msg = False
         st.markdown(
@@ -949,17 +855,17 @@ with st.sidebar:
 if "Input" in menu:
     if sheet_err: st.warning("⚠️ "+str(sheet_err))
 
-# ── Fire level up popup ───────────────────────────────────────────────────
+    # ── Fire level up popup ───────────────────────────────────────────────────
     if st.session_state.get("level_up_pending"):
         lup = st.session_state.level_up_pending
         st.session_state.level_up_pending = None
 
         name_js  = lup["name"].replace("'", "\\'").replace('"', '\\"')
-        cat_js   = lup["cat"]
         color_js = lup["color"]
         xp_js    = lup["xp"]
 
         idx_map  = {"kitten":0,"kampung":1,"oyen":2,"garong":3,"elite":4,"sultan":5,"king":6}
+        cat_js   = lup["cat"]
         idx      = idx_map.get(cat_js, 0)
         sub_msgs = [
             "Perjalananmu dimulai!",
@@ -979,7 +885,10 @@ if "Input" in menu:
         prog_pct = min(int(xp_js / next_xp * 100), 100) if next_xp > 0 else 100
         prog_lbl = "Max Level!" if xp_js >= 3000 else f"&#x2192; {next_xp} XP"
 
-st.markdown(f"""
+        # ─────────────────────────────────────────────────────────────────────
+        # FIXED: button pakai onclick langsung, bukan addEventListener
+        # ─────────────────────────────────────────────────────────────────────
+        st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
 #lup-overlay{{
@@ -1192,16 +1101,13 @@ st.markdown(f"""
   }}
 
   var pf = document.getElementById('lup-prog-fill');
-  if(pf){{
-    setTimeout(function(){{ pf.style.width = '{prog_pct}%'; }}, 120);
-  }}
+  if(pf) setTimeout(function(){{ pf.style.width = '{prog_pct}%'; }}, 120);
   lupBurst();
 }})();
 </script>
 """, unsafe_allow_html=True)
+    # ── End level up popup ────────────────────────────────────────────────────
 
-    # ── End level up popup ────────────────────────────────────────────────────    
-    
     net_cls = "r" if net_today < 0 else "g"
     lv_idx  = next((i for i, (t, _) in enumerate(LEVELS) if t == level_min), 0)
     next_lv = LEVELS[min(lv_idx + 1, len(LEVELS) - 1)][1]
