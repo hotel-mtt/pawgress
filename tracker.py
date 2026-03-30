@@ -979,7 +979,7 @@ if "Input" in menu:
         prog_pct = min(int(xp_js / next_xp * 100), 100) if next_xp > 0 else 100
         prog_lbl = "Max Level!" if xp_js >= 3000 else f"&#x2192; {next_xp} XP"
 
-        st.markdown(f"""
+st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
 #lup-overlay{{
@@ -1080,6 +1080,8 @@ if "Input" in menu:
   background:{color_js};
   transition:all .15s;letter-spacing:.2px;
   pointer-events:auto;
+  position:relative;
+  z-index:1000001;
 }}
 #lup-btn:hover{{opacity:.88;transform:translateY(-1px);}}
 #lup-btn:active{{transform:translateY(0);opacity:1;}}
@@ -1102,28 +1104,20 @@ if "Input" in menu:
       <span>{xp_js} XP</span>
       <span>{prog_lbl}</span>
     </div>
-    <button id="lup-btn">Lanjut &#x2192;</button>
+    <button id="lup-btn" onclick="
+      var ov=document.getElementById('lup-overlay');
+      var cv=document.getElementById('lup-canvas');
+      if(ov){{ov.style.transition='opacity .25s';ov.style.opacity='0';}}
+      if(window._lupConfInt){{clearInterval(window._lupConfInt);window._lupConfInt=null;}}
+      if(cv)cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
+      setTimeout(function(){{if(ov)ov.style.display='none';if(cv)cv.style.display='none';}},260);
+    ">Lanjut &#x2192;</button>
   </div>
 </div>
 
 <script>
 (function(){{
-  var confInt = null;
-
-  function lupClose(){{
-    var ov = document.getElementById('lup-overlay');
-    var cv = document.getElementById('lup-canvas');
-    if(ov){{
-      ov.style.transition = 'opacity .25s';
-      ov.style.opacity    = '0';
-    }}
-    if(confInt) clearInterval(confInt);
-    if(cv) cv.getContext('2d').clearRect(0, 0, cv.width, cv.height);
-    setTimeout(function(){{
-      if(ov) ov.style.display = 'none';
-      if(cv) cv.style.display = 'none';
-    }}, 260);
-  }}
+  window._lupConfInt = null;
 
   function lupBurst(){{
     var cv = document.getElementById('lup-canvas');
@@ -1152,8 +1146,8 @@ if "Input" in menu:
       }};
     }});
 
-    if(confInt) clearInterval(confInt);
-    confInt = setInterval(function(){{
+    if(window._lupConfInt) clearInterval(window._lupConfInt);
+    window._lupConfInt = setInterval(function(){{
       ctx.clearRect(0, 0, cv.width, cv.height);
       var alive = false;
       pts.forEach(function(p){{
@@ -1190,37 +1184,22 @@ if "Input" in menu:
         ctx.restore();
       }});
       if(!alive){{
-        clearInterval(confInt);
+        clearInterval(window._lupConfInt);
+        window._lupConfInt = null;
         ctx.clearRect(0, 0, cv.width, cv.height);
       }}
     }}, 16);
   }}
 
-  function init(){{
-    var btn = document.getElementById('lup-btn');
-    var pf  = document.getElementById('lup-prog-fill');
-    if(btn){{
-      btn.addEventListener('click', lupClose);
-      btn.addEventListener('touchend', function(e){{
-        e.preventDefault();
-        lupClose();
-      }});
-    }}
-    if(pf){{
-      setTimeout(function(){{ pf.style.width = '{prog_pct}%'; }}, 120);
-    }}
-    lupBurst();
+  var pf = document.getElementById('lup-prog-fill');
+  if(pf){{
+    setTimeout(function(){{ pf.style.width = '{prog_pct}%'; }}, 120);
   }}
-
-  if(document.readyState === 'loading'){{
-    document.addEventListener('DOMContentLoaded', init);
-  }} else {{
-    init();
-  }}
+  lupBurst();
 }})();
 </script>
 """, unsafe_allow_html=True)
-        
+
     # ── End level up popup ────────────────────────────────────────────────────    
     
     net_cls = "r" if net_today < 0 else "g"
