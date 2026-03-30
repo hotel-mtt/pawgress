@@ -528,8 +528,8 @@ IDLE_JS = f"""
       toast.classList.add('show');
       dot.className = sisa <= 60000 ? 'danger' : 'warn';
       txt.textContent = sisa <= 60000
-        ? '⚠ Logout otomatis: ' + fmt(sisa)
-        : 'Idle · Logout dalam ' + fmt(sisa);
+        ? 'Logout otomatis: ' + fmt(sisa)
+        : 'Idle - Logout dalam ' + fmt(sisa);
     }} else {{
       toast.classList.remove('show');
       dot.className = '';
