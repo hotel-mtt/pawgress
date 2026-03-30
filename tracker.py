@@ -949,16 +949,16 @@ with st.sidebar:
 if "Input" in menu:
     if sheet_err: st.warning("⚠️ "+str(sheet_err))
 
-    # ── Fire level up popup ───────────────────────────────────────────────────
+# ── Fire level up popup ───────────────────────────────────────────────────
     if st.session_state.get("level_up_pending"):
         lup = st.session_state.level_up_pending
         st.session_state.level_up_pending = None
- 
-        name_js  = lup["name"].replace("'", "\\'")
+
+        name_js  = lup["name"].replace("'", "\\'").replace('"', '\\"')
         cat_js   = lup["cat"]
         color_js = lup["color"]
         xp_js    = lup["xp"]
- 
+
         idx_map  = {"kitten":0,"kampung":1,"oyen":2,"garong":3,"elite":4,"sultan":5,"king":6}
         idx      = idx_map.get(cat_js, 0)
         sub_msgs = [
@@ -972,122 +972,238 @@ if "Input" in menu:
         ]
         emojis   = ["🐱","😸","🐈","😼","🐆","👑","🏆"]
         next_xps = [100, 300, 600, 1000, 1800, 3000, 3000]
- 
+
         sub_msg  = sub_msgs[idx]
         emoji    = emojis[idx]
         next_xp  = next_xps[idx]
         prog_pct = min(int(xp_js / next_xp * 100), 100) if next_xp > 0 else 100
-        prog_lbl = "Max Level!" if xp_js >= 3000 else f"→ {next_xp} XP"
- 
-        components.html(f"""<!DOCTYPE html><html><head><meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+        prog_lbl = "Max Level!" if xp_js >= 3000 else f"&#x2192; {next_xp} XP"
+
+        st.markdown(f"""
 <style>
-*{{margin:0;padding:0;box-sizing:border-box}}
-html,body{{width:100%;height:100%;overflow:hidden;background:transparent;font-family:'Nunito',sans-serif}}
-.ov{{position:fixed;inset:0;background:rgba(18,15,26,0.52);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}}
-canvas{{position:fixed;inset:0;pointer-events:none;z-index:0}}
-.card{{background:#fff;border-radius:20px;padding:24px 28px;width:268px;text-align:center;position:relative;overflow:hidden;z-index:2;box-shadow:0 16px 48px rgba(18,15,26,0.22);animation:popIn .45s cubic-bezier(.34,1.56,.64,1) both}}
-@keyframes popIn{{0%{{transform:scale(0.4);opacity:0}}75%{{transform:scale(1.04)}}100%{{transform:scale(1);opacity:1}}}}
-.acc{{position:absolute;top:0;left:0;right:0;height:3px;border-radius:20px 20px 0 0;background:{color_js}}}
-@keyframes float{{0%,100%{{transform:translateY(0)}}50%{{transform:translateY(-7px)}}}}
-.emo{{font-size:56px;display:block;line-height:1;margin:6px auto 10px;animation:float 2s ease-in-out infinite}}
-.badge{{display:inline-block;font-size:10px;font-weight:800;padding:3px 13px;border-radius:99px;margin-bottom:9px;background:{color_js}20;color:{color_js};border:1.5px solid {color_js}55}}
-.title{{font-size:17px;font-weight:900;color:#120f1a;margin-bottom:2px;letter-spacing:-.3px}}
-.sub{{font-size:11px;color:#7a6e6a;margin-bottom:10px;font-weight:600}}
-.xp-num{{font-size:30px;font-weight:900;font-family:monospace;line-height:1;color:{color_js};display:block}}
-.xp-lbl{{font-size:9px;color:#b0a49e;text-transform:uppercase;letter-spacing:1px;margin-top:2px;margin-bottom:13px;display:block}}
-.prog-track{{background:#f0ece8;border-radius:99px;height:5px;overflow:hidden;margin-bottom:4px}}
-.prog-fill{{height:100%;border-radius:99px;background:{color_js};width:0;transition:width 1s ease-out}}
-.prog-labels{{display:flex;justify-content:space-between;font-size:9px;color:#b0a49e;font-weight:700;margin-bottom:16px}}
-.btn{{border:none;border-radius:11px;padding:11px 0;font-size:13px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;color:#fff;width:100%;background:{color_js};transition:all .15s;letter-spacing:.2px}}
-.btn:hover{{opacity:.9;transform:translateY(-1px)}}
-.btn:active{{transform:translateY(0);opacity:1}}
-</style></head><body>
-<div class="ov" id="ov">
-  <canvas id="cv"></canvas>
-  <div class="card" id="card">
-    <div class="acc"></div>
-    <span class="emo">{emoji}</span>
-    <div class="badge">🎉 Level Up!</div>
-    <div class="title">{name_js}</div>
-    <div class="sub">{sub_msg}</div>
-    <span class="xp-num">{xp_js}</span>
-    <span class="xp-lbl">XP Total</span>
-    <div class="prog-track"><div class="prog-fill" id="pf"></div></div>
-    <div class="prog-labels">
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+#lup-overlay{{
+  position:fixed;inset:0;z-index:999999;
+  background:rgba(18,15,26,0.50);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;
+}}
+#lup-canvas{{
+  position:fixed;inset:0;
+  pointer-events:none;
+  z-index:999998;
+}}
+#lup-card{{
+  background:#ffffff;
+  border-radius:20px;
+  padding:26px 30px 22px;
+  width:272px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+  z-index:1000000;
+  box-shadow:0 20px 60px rgba(18,15,26,0.28);
+  animation:lupPop .45s cubic-bezier(.34,1.56,.64,1) both;
+  font-family:'Nunito',sans-serif;
+}}
+@keyframes lupPop{{
+  0%{{transform:scale(0.4);opacity:0}}
+  75%{{transform:scale(1.05)}}
+  100%{{transform:scale(1);opacity:1}}
+}}
+#lup-accent{{
+  position:absolute;top:0;left:0;right:0;height:4px;
+  background:{color_js};border-radius:20px 20px 0 0;
+}}
+@keyframes lupFloat{{
+  0%,100%{{transform:translateY(0)}}
+  50%{{transform:translateY(-7px)}}
+}}
+#lup-emoji{{
+  font-size:58px;display:block;line-height:1.1;
+  margin:4px auto 10px;
+  animation:lupFloat 2s ease-in-out infinite;
+}}
+#lup-badge{{
+  display:inline-block;
+  font-size:10px;font-weight:800;
+  padding:3px 13px;border-radius:99px;
+  margin-bottom:9px;
+  background:{color_js}22;
+  color:{color_js};
+  border:1.5px solid {color_js}66;
+  font-family:'Nunito',sans-serif;
+}}
+#lup-title{{
+  font-size:18px;font-weight:900;
+  color:#120f1a;margin-bottom:3px;
+  letter-spacing:-.3px;
+  font-family:'Nunito',sans-serif;
+}}
+#lup-sub{{
+  font-size:11px;color:#7a6e6a;
+  margin-bottom:10px;font-weight:600;
+  font-family:'Nunito',sans-serif;
+}}
+#lup-xp{{
+  font-size:34px;font-weight:900;
+  font-family:monospace;
+  line-height:1;color:{color_js};display:block;
+}}
+#lup-xp-lbl{{
+  font-size:9px;color:#b0a49e;
+  text-transform:uppercase;letter-spacing:1px;
+  margin-top:2px;margin-bottom:14px;display:block;
+  font-family:'Nunito',sans-serif;
+}}
+#lup-prog-track{{
+  background:#f0ece8;border-radius:99px;
+  height:5px;overflow:hidden;margin-bottom:4px;
+}}
+#lup-prog-fill{{
+  height:100%;border-radius:99px;
+  background:{color_js};width:0;
+  transition:width 1s ease-out;
+}}
+#lup-prog-labels{{
+  display:flex;justify-content:space-between;
+  font-size:9px;color:#b0a49e;font-weight:700;
+  margin-bottom:16px;
+  font-family:'Nunito',sans-serif;
+}}
+#lup-btn{{
+  border:none;border-radius:12px;
+  padding:12px 0;font-size:14px;font-weight:900;
+  cursor:pointer;font-family:'Nunito',sans-serif;
+  color:#fff;width:100%;
+  background:{color_js};
+  transition:all .15s;letter-spacing:.2px;
+}}
+#lup-btn:hover{{opacity:.88;transform:translateY(-1px);}}
+#lup-btn:active{{transform:translateY(0);opacity:1;}}
+</style>
+
+<canvas id="lup-canvas"></canvas>
+<div id="lup-overlay">
+  <div id="lup-card">
+    <div id="lup-accent"></div>
+    <span id="lup-emoji">{emoji}</span>
+    <div id="lup-badge">&#x1F389; Level Up!</div>
+    <div id="lup-title">{name_js}</div>
+    <div id="lup-sub">{sub_msg}</div>
+    <span id="lup-xp">{xp_js}</span>
+    <span id="lup-xp-lbl">XP Total</span>
+    <div id="lup-prog-track">
+      <div id="lup-prog-fill"></div>
+    </div>
+    <div id="lup-prog-labels">
       <span>{xp_js} XP</span>
       <span>{prog_lbl}</span>
     </div>
-    <button class="btn" onclick="cls()">Lanjut &rarr;</button>
+    <button id="lup-btn" onclick="lupClose()">Lanjut &#x2192;</button>
   </div>
 </div>
-<script>
-var confInt=null;
-function burst(){{
-  var cv=document.getElementById('cv');
-  cv.width=window.innerWidth;cv.height=window.innerHeight;
-  var ctx=cv.getContext('2d');
-  var cx=cv.width/2,cy=cv.height/2;
-  var cols=['{color_js}','#88bc77','#ccebf2','#f9e2b2','#f37973','#ffffff','#fbbf24','#a78bfa'];
-  var shapes=['circle','rect','star','diamond'];
-  var pts=Array.from({{length:60}},function(){{
-    var a=Math.random()*Math.PI*2;
-    var spd=Math.random()*8+3;
-    return{{
-      x:cx,y:cy,
-      vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-4,
-      sz:Math.random()*8+3,
-      c:cols[Math.floor(Math.random()*cols.length)],
-      r:Math.random()*360,vr:(Math.random()-.5)*12,
-      life:1,decay:Math.random()*0.014+0.008,
-      shape:shapes[Math.floor(Math.random()*shapes.length)]
-    }};
-  }});
-  if(confInt)clearInterval(confInt);
-  confInt=setInterval(function(){{
-    ctx.clearRect(0,0,cv.width,cv.height);
-    var alive=false;
-    pts.forEach(function(p){{
-      p.x+=p.vx;p.y+=p.vy;p.vy+=0.18;
-      p.r+=p.vr;p.life-=p.decay;
-      if(p.life<=0)return;
-      alive=true;
-      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r*Math.PI/180);
-      ctx.fillStyle=p.c;ctx.globalAlpha=Math.max(0,p.life)*0.92;
-      var s=p.sz;
-      if(p.shape==='circle'){{ctx.beginPath();ctx.arc(0,0,s/2,0,Math.PI*2);ctx.fill();}}
-      else if(p.shape==='rect'){{ctx.fillRect(-s/2,-s/4,s,s/2);}}
-      else if(p.shape==='diamond'){{ctx.beginPath();ctx.moveTo(0,-s/2);ctx.lineTo(s/2,0);ctx.lineTo(0,s/2);ctx.lineTo(-s/2,0);ctx.closePath();ctx.fill();}}
-      else{{
-        var n=5;ctx.beginPath();
-        for(var i=0;i<n*2;i++){{
-          var ang=i*Math.PI/n-Math.PI/2;
-          var r2=i%2===0?s/2:s/4;
-          if(i===0)ctx.moveTo(Math.cos(ang)*r2,Math.sin(ang)*r2);
-          else ctx.lineTo(Math.cos(ang)*r2,Math.sin(ang)*r2);
-        }}
-        ctx.closePath();ctx.fill();
-      }}
-      ctx.restore();
-    }});
-    if(!alive){{clearInterval(confInt);ctx.clearRect(0,0,cv.width,cv.height);}}
-  }},16);
-}}
-function cls(){{
-  var o=document.getElementById('ov');
-  o.style.transition='opacity .25s';
-  o.style.opacity='0';
-  if(confInt)clearInterval(confInt);
-  setTimeout(function(){{o.style.display='none';}},250);
-}}
-setTimeout(function(){{
-  document.getElementById('pf').style.width='{prog_pct}%';
-}},80);
-burst();
-</script></body></html>""", height=500, scrolling=False)
-    # ── End level up popup ────────────────────────────────────────────────────
-    # ─────────────────────────────────────────────────────────────────────────
 
+<script>
+(function(){{
+  var confInt = null;
+
+  function lupBurst(){{
+    var cv = document.getElementById('lup-canvas');
+    if(!cv) return;
+    cv.width  = window.innerWidth;
+    cv.height = window.innerHeight;
+    var ctx = cv.getContext('2d');
+    var cx  = cv.width / 2;
+    var cy  = cv.height / 2;
+    var cols = ['{color_js}','#88bc77','#ccebf2','#f9e2b2','#f37973','#ffffff','#fbbf24','#a78bfa'];
+    var shapes = ['circle','rect','star','diamond'];
+    var pts = Array.from({{length:65}}, function(){{
+      var a   = Math.random() * Math.PI * 2;
+      var spd = Math.random() * 9 + 3;
+      return {{
+        x:cx, y:cy,
+        vx: Math.cos(a) * spd,
+        vy: Math.sin(a) * spd - 5,
+        sz: Math.random() * 9 + 3,
+        c:  cols[Math.floor(Math.random() * cols.length)],
+        r:  Math.random() * 360,
+        vr: (Math.random() - .5) * 12,
+        life: 1,
+        decay: Math.random() * 0.013 + 0.008,
+        shape: shapes[Math.floor(Math.random() * shapes.length)]
+      }};
+    }});
+
+    if(confInt) clearInterval(confInt);
+    confInt = setInterval(function(){{
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      var alive = false;
+      pts.forEach(function(p){{
+        p.x += p.vx; p.y += p.vy; p.vy += 0.20;
+        p.r += p.vr; p.life -= p.decay;
+        if(p.life <= 0) return;
+        alive = true;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.r * Math.PI / 180);
+        ctx.fillStyle   = p.c;
+        ctx.globalAlpha = Math.max(0, p.life) * 0.92;
+        var s = p.sz;
+        if(p.shape === 'circle'){{
+          ctx.beginPath(); ctx.arc(0,0,s/2,0,Math.PI*2); ctx.fill();
+        }} else if(p.shape === 'rect'){{
+          ctx.fillRect(-s/2, -s/4, s, s/2);
+        }} else if(p.shape === 'diamond'){{
+          ctx.beginPath();
+          ctx.moveTo(0,-s/2); ctx.lineTo(s/2,0);
+          ctx.lineTo(0,s/2);  ctx.lineTo(-s/2,0);
+          ctx.closePath(); ctx.fill();
+        }} else {{
+          var n = 5;
+          ctx.beginPath();
+          for(var i = 0; i < n*2; i++){{
+            var ang = i * Math.PI/n - Math.PI/2;
+            var r2  = i%2===0 ? s/2 : s/4;
+            if(i===0) ctx.moveTo(Math.cos(ang)*r2, Math.sin(ang)*r2);
+            else      ctx.lineTo(Math.cos(ang)*r2, Math.sin(ang)*r2);
+          }}
+          ctx.closePath(); ctx.fill();
+        }}
+        ctx.restore();
+      }});
+      if(!alive){{
+        clearInterval(confInt);
+        ctx.clearRect(0, 0, cv.width, cv.height);
+      }}
+    }}, 16);
+  }}
+
+  window.lupClose = function(){{
+    var ov = document.getElementById('lup-overlay');
+    var cv = document.getElementById('lup-canvas');
+    if(ov){{ ov.style.transition='opacity .25s'; ov.style.opacity='0'; }}
+    if(confInt) clearInterval(confInt);
+    if(cv) cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
+    setTimeout(function(){{
+      if(ov) ov.style.display='none';
+      if(cv) cv.style.display='none';
+    }}, 260);
+  }};
+
+  setTimeout(function(){{
+    var pf = document.getElementById('lup-prog-fill');
+    if(pf) pf.style.width = '{prog_pct}%';
+  }}, 120);
+
+  lupBurst();
+}})();
+</script>
+""", unsafe_allow_html=True)
+    
+    # ── End level up popup ────────────────────────────────────────────────────
+    
     net_cls = "r" if net_today < 0 else "g"
     lv_idx  = next((i for i, (t, _) in enumerate(LEVELS) if t == level_min), 0)
     next_lv = LEVELS[min(lv_idx + 1, len(LEVELS) - 1)][1]
